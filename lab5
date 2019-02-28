@@ -1,0 +1,195 @@
+/*Dana jest klasa Klient:
+class Klient
+{
+Serwer *s; // adres do obiektu klasy Serwer zdefiniowanego
+//wcześniej z którym zwiazany jest klient;
+string nazwa; // nazwa klienta
+}
+Zdefiniować dla tej klasy:
+1. konstruktor dwuparametrowy, który tworzy obiekt Klient o danej nazwie z adresem serwera..
+2. metodę send(string msg), która wysyła wiadomość do serwera (z którym jest związany);
+metoda ta powinna wywołać metodę receive zdefiniowaną w klasie Serwer;
+
+3. zdefiniować zmienną statyczną, która będzie licznikiem utworzonych obiektów klasy klient-
+inkrementowaną w konstruktorze, dekrementowaną w destruktorz;
+
+4. zdefiniować destruktor (Nie usuwać serwera). Obiekt powinien wysłać do serwera wiadomość o u
+usunięciu go z tablicy Dane : msg=”DEL”
+Dana jest klasa Serwer:
+struct Dane
+{
+Client *cli; // adres klienta, który wysłał wiadomość
+string msg; // odebrana wiadomość
+}
+class Serwer
+{
+Dane * tab; // tablica zawierająca adres klientów i odebrane od nich wiadomość
+int n; // liczba klientów
+public:
+receive(string msg, Client *cli);
+}
+1. Zdefiniować dla klasy Serwer konstruktor, który tworzy tablice tab o długości n;
+pole cli w tablicy powinno być ustawione na NULL
+2. Zaprzyjażnić klasę Serwer z klasą Klient;
+Serwer ma mieć wgląd do obiektów klasy klient;
+
+3. Zdefiniować metodę receive wywołaną przez klienta, od którego odbierana jest wiadomość-
+wiadomość oraz adres klienta który ją wysłał powinien zostać umieszczony w pierwszym wolnym (cli
+
+ustawione na NULL) elemencie tablicy. Gdy wiadomość zostanie wysłana ponownie przez tego samego
+klienta należy ja dopisać do istniejącej wcześnie wiadomość (operator + na klasie string) odzielając
+znakiem '#'. Jeżeli tablica (liczba aktywnych klientów jest wyższa od n) tab zostanie przepełniona ,
+metoda receive wyświetla na konsoli informacje o błędzie. Jeżeli treść wiadomości to “DEL” obiekt jest
+usuwany z tablicy Dane.
+4. Zdefinować metodę drukuj() , która wyświetla zawwartość bazy serwera: nazwy klientów i ich
+wiadomości oraz liczbę aktywnych klientów.
+W funkcji main tworzymy jeden obiekt serwer i kilka klientów. W ramach testu prawidlowego działania
+klas tworzymy wszystkie możliwe scenariusze , które mają być dokładnie skomentowane.
+Należy w tym celu zdefioniowac kilka funkcji np. test1(), test(2) ... które w danej chwili wywołujemy.
+*/
+
+#include "stdafx.h"
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+
+
+class Klient
+{
+public:
+	string nazwa;
+	Serwer * s;
+	friend class Serwer;
+	static int licznik;
+	Klient(string nazwa, Serwer* adresSerwera)
+	{
+		this->nazwa = nazwa;
+		this->s = adresSerwera;
+		licznik++;
+	}
+
+	~Klient()
+	{
+		send("DEL");
+		licznik--;
+	}
+
+	void send(string msg)
+	{
+		s->receive(msg, this);
+	}
+
+};
+
+
+struct Dane
+{
+	Klient *cli; // adres klienta, który wysłał wiadomość
+	string msg; // odebrana wiadomość
+};
+
+class Serwer
+{
+private:
+	Dane * tab; // tablica zawierająca adres klientów i odebrane od nich wiadomość
+	int n; // liczba klientów
+
+	void usunKlienta(Klient *cli)
+	{
+		for (int i = 0;i < n;i++)
+		{
+			if (tab[i].cli == cli)
+			{
+				tab[i].cli = NULL;
+				tab[i].msg = "";
+			}
+
+		}
+	}
+
+	bool znajdzIWpiszDoKlienta(Klient * cli, string msg)
+	{
+		for (int i = 0;i < n;i++)
+		{
+			if (tab[i].cli == cli)
+			{
+				tab[i].msg += "#" + msg;
+				return true;
+			}
+
+		}
+		return false;
+	}
+
+	bool stworzNowegoKlienta(Klient *cli, string msg)
+	{
+		for (int i = 0;i < n;i++)
+		{
+			if (tab[i].cli == NULL)
+			{
+				tab[i].cli = cli;
+				tab[i].msg = msg;
+				return true;
+			}
+		}
+		return false;
+	}
+
+public:
+	Serwer(int n)
+	{
+		tab = new Dane[n];
+		for (int i = 0;i < n;i++)
+		{
+			tab[i].cli = NULL;
+			tab[i].msg = "";
+		}
+	}
+
+	
+
+	void receive(string msg, Klient *cli)
+	{
+		if (msg == "DEL")
+		{
+			usunKlienta(cli);
+		}
+		else
+		{
+			if (!znajdzIWpiszDoKlienta(cli, msg))
+			{
+				if (!stworzNowegoKlienta(cli, msg))
+					cout << "przepelnienei tablicy" << endl;
+			}
+		}
+	}
+
+	void drukuj()
+	{
+		cout << "Liczba Klientow -> " << Klient::licznik << endl;
+		for (int i = 0;i < n;i++)
+		{
+			if (tab[i].cli != NULL)
+			{
+				cout << (tab[i].cli)->nazwa << " msg:" << tab[i].msg << endl;
+			}
+		}
+	}
+};
+
+int Klient::licznik = 0;
+
+int main()
+{
+
+	cout << "ala" << endl;
+	for (;;);
+
+
+
+
+
+    return 0;
+}
